@@ -9,6 +9,7 @@ const ids=Array.from({length:9},(_,i)=>`00000000-0000-0000-0000-${String(i+1).pa
 async function api(player:number,action:string,code='',payload:Record<string,unknown>={}){
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[ids[player]]);
   const r=await db.query<{s:Snapshot}>('select public.hot_game($1,$2,$3::jsonb) as s',[action,code,JSON.stringify(payload)]);
+  if ('unavailable' in r.rows[0].s) throw new Error(String(r.rows[0].s.unavailable));
   return r.rows[0].s;
 }
 async function room(count=4){
@@ -21,6 +22,7 @@ beforeAll(async()=>{
   await db.exec(`create role anon; create role authenticated; create schema auth;
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;`);
   await db.exec(readFileSync('supabase/migrations/001_hot_takes.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/002_room_lifecycle.sql','utf8'));
 },30000);
 afterAll(async()=>{await db.close();});
 describe('authoritative multiplayer game',()=>{
