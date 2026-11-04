@@ -1,7 +1,7 @@
 export type Phase = 'lobby' | 'answering' | 'voting' | 'results' | 'finished';
-export type Player = { id: string; name: string; online: boolean; answered: boolean; voted: boolean; total: number };
-export type Answer = { id: string; text: string; mine?: boolean; author?: string; heat?: number; points?: number };
-export type RoundHighlight = { round: number; prompt: string; takes: {id:string; text:string; author:string}[] };
+export type Player = { id: string; name: string; badge?: string; online: boolean; answered: boolean; voted: boolean; total: number };
+export type Answer = { id: string; text: string; mine?: boolean; author?: string; badge?: string; heat?: number; points?: number };
+export type RoundHighlight = { round: number; prompt: string; takes: {id:string; text:string; author:string;badge?:string}[] };
 export type Snapshot = { code: string; phase: Phase; host: string; me: string; round: number; prompt: string; deadline: string | null; players: Player[]; answers: Answer[]; history: RoundHighlight[]; note?: string };
 export function standings(players: Player[]) {
   const sorted=[...players].sort((a,b)=>b.total-a.total);

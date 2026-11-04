@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Snapshot } from '../src/game';
 import { scoreAnswers } from '../src/game';
+import { badges } from '../src/badges';
 
 const db=new PGlite();
 const ids=Array.from({length:9},(_,i)=>`00000000-0000-0000-0000-${String(i+1).padStart(12,'0')}`);
@@ -24,9 +25,40 @@ beforeAll(async()=>{
   await db.exec(readFileSync('supabase/migrations/001_hot_takes.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/002_room_lifecycle.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/004_game_recap.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261104204041_player_badges.sql','utf8'));
 },30000);
 afterAll(async()=>{await db.close();});
 describe('authoritative multiplayer game',()=>{
+  it('validates badges, allows duplicates, and limits changes to the caller in the lobby',async()=>{
+    await expect(api(0,'create','',{name:'Host',badge:'not-an-icon'})).rejects.toThrow('eight');
+    let s=await api(0,'create','',{name:'Host',badge:'hot-breath'});
+    expect(s.players[0].badge).toBe('hot-breath');
+    await expect(api(1,'join',s.code,{name:'Other',badge:'bad'})).rejects.toThrow('eight');
+    s=await api(1,'join',s.code,{name:'Other',badge:'hot-breath'});
+    expect(s.players.every(p=>p.badge==='hot-breath')).toBe(true);
+    await expect(api(0,'badge',s.code,{badge:'https://untrusted/image.png'})).rejects.toThrow('eight');
+    s=await api(1,'badge',s.code,{badge:'hot-honey',player:ids[0]});
+    expect(s.players.map(p=>p.badge)).toEqual(['hot-breath','hot-honey']);
+    for(const badge of badges){
+      s=await api(1,'badge',s.code,{badge:badge.id});
+      expect(s.players[1].badge).toBe(badge.id);
+    }
+    await expect(api(2,'badge',s.code,{badge:'hot-sun'})).rejects.toThrow('Join');
+  });
+  it('defaults to Hot Sauce, locks saved badges after start, and preserves them on reconnect',async()=>{
+    let s=await api(0,'create','',{name:'Host'});
+    expect(s.players[0].badge).toBe('hot-sauce');
+    for(let i=1;i<4;i++)s=await api(i,'join',s.code,{name:`P${i}`,badge:'hot-potato'});
+    s=await api(0,'start',s.code);
+    // Simulate a save arriving after another player started the game.
+    s=await api(1,'badge',s.code,{badge:'hot-coffee'});
+    expect(s.phase).toBe('answering');expect(s.players[1].badge).toBe('hot-potato');
+    await api(1,'leave',s.code);
+    s=await api(1,'resume',s.code);
+    expect(s.players[1].badge).toBe('hot-potato');
+    s=await api(1,'join',s.code,{name:'P1',badge:'hot-sun'});
+    expect(s.players[1].badge).toBe('hot-potato');
+  });
   it('enforces room capacity, membership, and host controls',async()=>{
     let s=await api(0,'create','',{name:'Host'});
     await expect(api(0,'start',s.code)).rejects.toThrow('four');
@@ -70,7 +102,7 @@ describe('authoritative multiplayer game',()=>{
       expect(s.history).toEqual([]);
       s=await api(1,'sync',s.code);expect(s.answers).toEqual([]);
       for(let i=1;i<4;i++)s=await api(i,'answer',s.code,{text:`Take ${i}`,prompt:s.prompt});
-      expect(s.phase).toBe('voting');expect(s.answers.every(a=>a.author===undefined)).toBe(true);
+      expect(s.phase).toBe('voting');expect(s.answers.every(a=>a.author===undefined&&a.badge===undefined)).toBe(true);
       const ballots:string[][]=[];const answerIds=s.answers.map(a=>a.id);
       for(let i=0;i<4;i++){
         const own=await api(i,'sync',s.code);
@@ -79,13 +111,13 @@ describe('authoritative multiplayer game',()=>{
       }
       expect(s.phase).toBe(round===5?'finished':'results');
       const expected=scoreAnswers(answerIds,ballots);
-      for(const a of s.answers){expect(a.author).toBeTruthy();expect(a.points).toBeCloseTo(expected.find(e=>e.id===a.id)!.points);}
+      for(const a of s.answers){expect(a.author).toBeTruthy();expect(a.badge).toBe('hot-sauce');expect(a.points).toBeCloseTo(expected.find(e=>e.id===a.id)!.points);}
       if(round<5)s=await api(0,'next',s.code);
     }
     expect(used.size).toBe(5);
     expect(s.history.map(r=>r.round)).toEqual([1,2,3,4,5]);
     expect(s.history.map(r=>r.prompt)).toEqual([...used]);
-    expect(s.history.every(r=>r.takes.length>0&&r.takes.every(t=>t.author&&t.text))).toBe(true);
+    expect(s.history.every(r=>r.takes.length>0&&r.takes.every(t=>t.author&&t.text&&t.badge==='hot-sauce'))).toBe(true);
     const synced=await api(0,'sync',s.code);
     expect(synced.history).toEqual(s.history); // Polling must not duplicate highlights.
     expect((await api(0,'resume',s.code)).history).toEqual(s.history);

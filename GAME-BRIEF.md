@@ -12,6 +12,19 @@ A playful, fiery game-show style with warm colors and bold typography. Built-in 
 
 - 4–8 players; host starts the game from the lobby.
 - Join with a nickname and room code, without accounts.
+- Choose a mascot badge beside the nickname before hosting or joining. The eight
+  choices are Hot Wings, Hot Breath (a fire-breathing dragon), Hot Honey, Hot Sun,
+  Hot Sauce, Hot Pepper, Hot Coffee, and Hot Potato. All have expressive faces,
+  bold outlines, warm colors, and cream circular backgrounds.
+- Default to Hot Sauce, allow duplicates, and remember the choice on that browser.
+  Tapping the badge preview opens eight labeled options; tapping an option saves
+  immediately. Players can reopen the picker from their own lobby avatar.
+- Badges lock when the game starts. If the game starts with a picker open or a save
+  pending, close the picker and retain the last server-approved badge. Failed saves
+  leave the previous badge selected and allow retry.
+- Show badges beside named players, including revealed answer authors, the final
+  scoreboard, winners, and recap authors. Never attach badges to anonymous answers.
+  Practice uses the selected badge and fixed badges for simulated players.
 - Save player identity on the phone for reconnection.
 - New players may join only before the game starts.
 - Transfer host controls to a connected player after the host disconnects for 30 seconds.

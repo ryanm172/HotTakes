@@ -13,3 +13,4 @@ dist/
 artifacts/
 playwright-report/
 test-results/
+supabase/.temp/

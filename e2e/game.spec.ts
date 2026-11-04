@@ -33,6 +33,8 @@ test('mobile practice plays five rounds and shows a winner',async({page})=>{
   await expect(page.getByRole('heading',{name:'Final scoreboard'})).toBeVisible();
   await expect(page.locator('.recap-scoreboard tbody tr')).toHaveCount(4);
   await expect(page.getByRole('article')).toHaveCount(5);
+  await expect(page.locator('.recap-scoreboard .mascot-badge')).toHaveCount(4);
+  await expect(page.locator('.recap-round .mascot-badge').first()).toBeVisible();
   await expect(page.locator('.players-panel')).toBeHidden();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:'artifacts/mobile-recap.png',fullPage:true});

@@ -24,7 +24,7 @@ Browser checks use installed Chrome. Start the dev server in one terminal, then 
 
 ## Connect real multiplayer
 
-1. Create a new project at https://supabase.com/dashboard. Save the database password in your password manager; the app does not need it. Password: py2wwzCa2tyRvESl
+1. Create a new project at https://supabase.com/dashboard. Save the database password in your password manager; the app does not need it.
 2. In **Authentication → Sign In / Providers**, enable **Anonymous Sign-Ins**. Dashboard wording may vary. Players receive a saved anonymous session without entering email or password. 
 3. In **SQL Editor**, run the contents of `supabase/migrations/001_hot_takes.sql` once. Use a new project, not one containing unrelated app data. This creates private game storage and the `hot_game` RPC.
 4. Find your project URL and **publishable** key in the project's Connect/API settings. The legacy `anon` key also works. Never use a secret or service-role key in the frontend.
@@ -93,6 +93,23 @@ This is a small private-play MVP. Before wider public release, add abuse/rate co
 Ask for one small change, inspect the diff, run the tests, then try the affected flow yourself. For example: “Add a copy-invite-link button without changing the game rules.” Keep the brief updated when changing rules, especially timers, ties, or missing-player behavior.
 
 ## Room lifecycle migration (existing Supabase projects)
+
+### Player mascot badges
+
+After migration 004, apply `supabase/migrations/20261104204041_player_badges.sql`
+before deploying the badge frontend. It validates the eight badge IDs, adds the
+`badge` action to `hot_game`, saves choices in each room's player state, and includes
+badges in named player snapshots, revealed results, and scored-round highlights.
+Badge changes use the same room lock as starting the game, so a late save cannot
+change an icon after play begins. Existing players without a saved badge display
+Hot Sauce. Badges never appear in anonymous answer payloads.
+
+Choose an icon beside the nickname, or tap your own avatar in a lobby to change it.
+Selections save immediately; a failed save retains the previous choice. The browser
+remembers successful choices in `hot-badge`. Practice runs the same picker locally.
+The eight illustrated mascots are shipped in `public/badges/hot-mascots.png`, a 4×2
+sprite sheet displayed by the shared `Badge` component. No external image service
+or uploaded player images are needed.
 
 ### Game recap update
 
