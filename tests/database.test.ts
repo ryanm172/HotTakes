@@ -23,6 +23,7 @@ beforeAll(async()=>{
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;`);
   await db.exec(readFileSync('supabase/migrations/001_hot_takes.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/002_room_lifecycle.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/004_game_recap.sql','utf8'));
 },30000);
 afterAll(async()=>{await db.close();});
 describe('authoritative multiplayer game',()=>{
@@ -47,6 +48,9 @@ describe('authoritative multiplayer game',()=>{
     }
     expect(s.phase).toBe('results');
     expect(s.answers.every(a=>a.heat===50&&a.points===3.5)).toBe(true);
+    const stored=await db.query<{history:any[]}>(`select state->'history' history from hot_private.rooms where code=$1`,[s.code]);
+    expect(stored.rows[0].history[0].takes).toHaveLength(8);
+    expect(s.history).toEqual([]); // Recap is only exposed once the game finishes.
     await db.query(`update hot_private.rooms set state=jsonb_set(state,'{players}',(select jsonb_agg(jsonb_set(p,'{seen}',to_jsonb(now()-interval '1 minute'))) from jsonb_array_elements(state->'players') p)) where code=$1`,[s.code]);
     await expect(api(0,'next',s.code)).rejects.toThrow('four');
   });
@@ -63,6 +67,7 @@ describe('authoritative multiplayer game',()=>{
       expect(s.round).toBe(round); expect(used.has(s.prompt)).toBe(false); used.add(s.prompt);
       s=await api(0,'answer',s.code,{text:'First take',prompt:s.prompt});
       expect(s.answers).toEqual([]);
+      expect(s.history).toEqual([]);
       s=await api(1,'sync',s.code);expect(s.answers).toEqual([]);
       for(let i=1;i<4;i++)s=await api(i,'answer',s.code,{text:`Take ${i}`,prompt:s.prompt});
       expect(s.phase).toBe('voting');expect(s.answers.every(a=>a.author===undefined)).toBe(true);
@@ -78,6 +83,13 @@ describe('authoritative multiplayer game',()=>{
       if(round<5)s=await api(0,'next',s.code);
     }
     expect(used.size).toBe(5);
+    expect(s.history.map(r=>r.round)).toEqual([1,2,3,4,5]);
+    expect(s.history.map(r=>r.prompt)).toEqual([...used]);
+    expect(s.history.every(r=>r.takes.length>0&&r.takes.every(t=>t.author&&t.text))).toBe(true);
+    const synced=await api(0,'sync',s.code);
+    expect(synced.history).toEqual(s.history); // Polling must not duplicate highlights.
+    expect((await api(0,'resume',s.code)).history).toEqual(s.history);
+    expect(JSON.stringify(s.history)).not.toMatch(/ballots|heat_units|point_units|"player"/);
   });
   it('rejects locked answers, incomplete ballots, own votes, and late joins',async()=>{
     let s=await room();

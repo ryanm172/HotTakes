@@ -94,6 +94,19 @@ Ask for one small change, inspect the diff, run the tests, then try the affected
 
 ## Room lifecycle migration (existing Supabase projects)
 
+### Game recap update
+
+After the lifecycle migrations below, run `supabase/migrations/004_game_recap.sql`
+once in the SQL Editor before deploying the updated frontend. Start a fresh room to
+test it; earlier test games do not have full round history and are not backfilled.
+Migration 004 does not change the existing cleanup schedule or retention window.
+
+After the fifth round's normal results, choose **View game recap** for the winners,
+ranked final scoreboard, and hottest answer(s) from each scored round. Highlights
+include exact ties and show the prompt, answer, and author. Practice mode also saves
+all five highlights locally. View last results opens the recap directly; refreshing
+an opened recap preserves the selected view in that browser tab.
+
 Apply these SQL files in order in the Supabase SQL Editor, before deploying the updated frontend:
 
 1. `supabase/migrations/002_room_lifecycle.sql` adds activity tracking, explicit departure,
