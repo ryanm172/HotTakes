@@ -1,8 +1,9 @@
-export type Phase = 'lobby' | 'answering' | 'voting' | 'results' | 'finished';
+export type Phase = 'lobby' | 'answering' | 'voting' | 'hotseat_ready' | 'hotseat_speaking' | 'hotseat_voting' | 'results' | 'finished';
 export type Player = { id: string; name: string; badge?: string; online: boolean; answered: boolean; voted: boolean; total: number };
-export type Answer = { id: string; text: string; mine?: boolean; author?: string; badge?: string; heat?: number; points?: number };
+export type Answer = { id: string; text: string; mine?: boolean; author?: string; badge?: string; heat?: number; points?: number; hottest?:boolean; defenseVotes?:number; player?:string };
+export type HotSeat = {contestants:{id:string;player:string;name:string;badge?:string;text:string}[];order:string[];index:number;pool:number;judges:string[];submitted:string[];myVote:string|null;practiceVotes?:Record<string,string>;practiceAnswers?:Answer[]};
 export type RoundHighlight = { round: number; prompt: string; takes: {id:string; text:string; author:string;badge?:string}[] };
-export type Snapshot = { code: string; phase: Phase; host: string; me: string; round: number; prompt: string; deadline: string | null; players: Player[]; answers: Answer[]; history: RoundHighlight[]; note?: string };
+export type Snapshot = { code: string; phase: Phase; host: string; me: string; round: number; prompt: string; deadline: string | null; players: Player[]; answers: Answer[]; history: RoundHighlight[]; hotseat?:HotSeat; note?: string };
 export function standings(players: Player[]) {
   const sorted=[...players].sort((a,b)=>b.total-a.total);
   return sorted.map(player=>({...player,rank:1+sorted.filter(p=>p.total>player.total).length}));
@@ -41,13 +42,13 @@ export function scoreAnswers(ids: string[], ballots: string[][]) {
     if (!count) throw new Error('Every answer needs a rating.');
     return { id, numerator, denominator: denominator * count };
   }).sort((a,b) => { const diff = b.numerator * a.denominator - a.numerator * b.denominator; return diff > 0n ? 1 : diff < 0n ? -1 : 0; });
-  const result: { id: string; heat: number; points: number }[] = [];
+  const result: { id: string; heat: number; points: number; hottest:boolean }[] = [];
   for (let i = 0; i < heat.length;) {
     let end = i + 1;
     while (end < heat.length && heat[i].numerator * heat[end].denominator === heat[end].numerator * heat[i].denominator) end++;
     let points = 0;
     for (let j = i; j < end; j++) points += j === 0 ? 0 : ids.length - j;
-    for (let j = i; j < end; j++) result.push({ id: heat[j].id, heat: Number(heat[j].numerator) / Number(heat[j].denominator) * 100, points: points / (end - i) });
+    for (let j = i; j < end; j++) result.push({ id: heat[j].id, heat: Number(heat[j].numerator) / Number(heat[j].denominator) * 100, points: points / (end - i), hottest:i===0 });
     i = end;
   }
   return result;

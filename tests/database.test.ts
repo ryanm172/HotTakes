@@ -26,6 +26,7 @@ beforeAll(async()=>{
   await db.exec(readFileSync('supabase/migrations/002_room_lifecycle.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/004_game_recap.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/20261104204041_player_badges.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261104213611_hot_seat.sql','utf8'));
 },30000);
 afterAll(async()=>{await db.close();});
 describe('authoritative multiplayer game',()=>{

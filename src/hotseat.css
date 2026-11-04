@@ -1,0 +1,14 @@
+.speaker-card{text-align:center;overflow-wrap:anywhere;margin:24px 0;display:grid;justify-items:center;gap:16px}
+.speaker-card h3{font-size:23px}.speaker-card p{font-size:18px;line-height:1.7}
+.speech-clock{display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:48px;margin:24px 0;color:var(--orange)}
+.speaker-order{list-style:none;padding:0;margin:30px 0 0;display:grid;gap:10px;border-top:1px solid var(--line);padding-top:20px}
+.speaker-order li{display:flex;align-items:center;gap:8px;font-size:13px}.speaker-order li small{margin-left:auto;color:var(--muted)}
+.speaker-order [aria-current=step]{font-weight:700;color:var(--orange)}
+.defense-options{border:0;padding:0;margin:24px 0;display:grid;gap:12px}
+.defense-options legend{margin-bottom:12px;font-size:13px;font-weight:600}
+.defense-options label{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;min-height:70px}
+.defense-options label.selected{border-color:var(--orange);background:#fff0d3}
+.defense-options input{width:18px;min-height:18px;height:18px;flex-shrink:0;margin:0;accent-color:var(--orange)}
+.defense-options small{display:block;font-size:12px;line-height:1.5;font-weight:400;margin-top:4px;overflow-wrap:anywhere}
+.hotseat-outcome{margin-bottom:20px}.hotseat-outcome h3{margin-bottom:8px}
+.hotseat-candidates{list-style:none;padding:0;display:grid;gap:12px;margin:20px 0}.hotseat-candidates li{padding:14px;border:1px solid var(--line);border-radius:12px}.hotseat-candidates p{margin-top:8px;font-size:14px;line-height:1.6;overflow-wrap:anywhere}

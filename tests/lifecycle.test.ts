@@ -15,7 +15,7 @@ async function agePlayer(code:string,i:number,age:string){
 beforeAll(async()=>{
   await db.exec(`create role anon;create role authenticated;create schema auth;
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;`);
-  for(const file of ['001_hot_takes.sql','002_room_lifecycle.sql','004_game_recap.sql','20261104204041_player_badges.sql'])await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
+  for(const file of ['001_hot_takes.sql','002_room_lifecycle.sql','004_game_recap.sql','20261104204041_player_badges.sql','20261104213611_hot_seat.sql'])await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('removes lobby members, frees nicknames and transfers host immediately',async()=>{

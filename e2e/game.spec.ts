@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { finishPracticeHotSeat } from './helpers';
 
 test('mobile practice plays five rounds and shows a winner',async({page})=>{
   await page.setViewportSize({width:390,height:844});
@@ -25,6 +26,7 @@ test('mobile practice plays five rounds and shows a winner',async({page})=>{
     expect(await page.locator('.rank-card p').nth(1).textContent()).toBe(first);
     if(round===1)await page.screenshot({path:'artifacts/mobile-voting.png',fullPage:true});
     await page.getByRole('button',{name:'Submit my ranking'}).click();
+    await finishPracticeHotSeat(page);
     await expect(page.getByText(`Practice opinion ${round}`,{exact:true})).toBeVisible();
     if(round<5)await page.getByRole('button',{name:'Next round'}).click();
   }

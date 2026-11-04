@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { finishPracticeHotSeat } from './helpers';
 
 async function onlineLobby(page:Page){
   await page.route(/\/src\/api\.ts(?:\?.*)?$/,route=>route.fulfill({contentType:'application/javascript',body:`
@@ -47,6 +48,7 @@ test('practice uses the selected mascot but keeps badges off anonymous answer ca
   await page.getByRole('button',{name:'Lock in my take'}).click();
   await expect(page.locator('.rank-card [role=img]')).toHaveCount(0);
   await page.getByRole('button',{name:'Submit my ranking'}).click();
+  await finishPracticeHotSeat(page);
   await expect(page.locator('.result-card').filter({hasText:'My honey take'}).getByRole('img',{name:'Hot Honey'})).toBeVisible();
 });
 

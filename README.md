@@ -94,6 +94,36 @@ Ask for one small change, inspect the diff, run the tests, then try the affected
 
 ## Room lifecycle migration (existing Supabase projects)
 
+### Hot Seat update
+
+After the badge migration, apply `supabase/migrations/20261104213611_hot_seat.sql`
+once before deploying the Hot Seat frontend. It adds ready, speaking, and explanation
+voting phases, server-controlled speaking deadlines, and provisional round scoring.
+It preserves room expiry, host transfer, badges, and final recap retention.
+
+The updated frontend opts newly created rooms into Hot Seat. Existing rooms and
+rooms created by older frontend builds continue using their previous scoring flow;
+start a fresh room with the updated app to test the mechanic. The migration can
+therefore be applied before deploying the updated frontend.
+
+When highest-heat answers tie, outside judges decide after one-minute, in-person
+defenses. The host starts each speaker; only that speaker can finish early. Voting
+waits for every outside judge with no timer. Lowest vote counts earn zero and the
+remaining contestants split the tied positions' point pool. Equal counts split it
+among everyone; a whole-room tie skips speeches because it has no outside judges.
+Final totals and recap highlights are recorded once, after the verdict.
+
+Speaking deadlines advance on the next successful game request, as answer deadlines
+already do. Browser polling usually notices within 2.5 seconds. No background worker
+or microphone permission is required. A player can speak in person with an offline
+phone; they simply cannot use the early-finish button until reconnected.
+
+Practice runs the same phases locally. Other judges vote automatically and simulated
+speakers have a labeled early-finish control. Automated tests cover point splits,
+private/locked votes, permissions, deadline expiry, stale clicks, host transfer, and
+round-five completion. Browser tests mock the network boundary; verify the real flow
+with separate browsers/devices after applying the migration.
+
 ### Player mascot badges
 
 After migration 004, apply `supabase/migrations/20261104204041_player_badges.sql`
