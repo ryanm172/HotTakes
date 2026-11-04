@@ -1,0 +1,12 @@
+node_modules/
+.tools/
+dist/
+.env
+.env.local
+.env.*
+!.env.example
+*.tsbuildinfo
+.vite/
+artifacts/
+playwright-report/
+test-results/
