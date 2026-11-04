@@ -51,6 +51,23 @@ Official references: [anonymous auth](https://supabase.com/docs/guides/auth/auth
 
 ## Hosting later
 
+### AWS Amplify Hosting
+
+The root `amplify.yml` installs Node 22, installs dependencies from the lockfile, runs game/database tests, builds the frontend, and publishes `dist`. It does not provision an AWS backend; Supabase remains the backend.
+
+1. Push this project, including `amplify.yml`, to a GitHub repository. The initial local Git repository has no remote configured yet; finish the GitHub upload before connecting Amplify.
+2. In the [AWS Amplify console](https://console.aws.amazon.com/amplify/), create a new app and choose GitHub as the source. Authorize the AWS Amplify GitHub App for this repository, select the repository and `main` branch, and continue.
+3. Use the checked-in `amplify.yml` for build settings. Choose the Amazon Linux 2023 build image if asked. There is no Amplify backend or Amplify CLI initialization step for this app.
+4. In the setup wizard's advanced settings, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` using the values from your Supabase project. If they are not available in the wizard, add them under Hosting → Environment variables after creation, then redeploy. Do not upload `.env.local` or use a secret/service-role key.
+5. Save and deploy. Open the generated HTTPS `amplifyapp.com` URL. Check that host/join works with four independent browser profiles/devices. A successful website build does not mean the Supabase migration or anonymous authentication is configured.
+6. After testing, open Hosting → Custom domains and add your purchased domain. Follow Amplify's DNS instructions at your domain provider and wait for domain verification and the HTTPS certificate. Route 53 is optional; you can keep your current registrar and DNS provider.
+
+Later pushes to the connected branch trigger new builds. Environment variable changes require a new build because Vite embeds these values into the frontend. Check AWS pricing and set a billing budget for the account before leaving hosting running.
+
+References: [GitHub connection](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html), [environment variables](https://docs.aws.amazon.com/amplify/latest/userguide/setting-env-vars.html), [custom domains](https://docs.aws.amazon.com/amplify/latest/userguide/custom-domains.html).
+
+### Other static hosts
+
 Build with `npm run build` (or `dev.ps1 build` on this PC). The output is `dist/`. Use a static host such as Cloudflare Pages, Netlify, or Vercel. Configure the two `VITE_` environment values before building; they are public frontend configuration. With Git-based hosting use `npm run build` and output directory `dist`. Select Node 22.12+.
 
 For a manual upload, build locally after configuring `.env.local`, then upload `dist`. The frontend URL must stay stable to preserve browser identity. In Safari, use Share → Add to Home Screen to give it an app-like launch icon. The app still requires an internet connection; there is no offline game mode or service-worker cache.
