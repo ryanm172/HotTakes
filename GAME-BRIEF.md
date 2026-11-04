@@ -16,6 +16,19 @@ A playful, fiery game-show style with warm colors and bold typography. Built-in 
 - New players may join only before the game starts.
 - Transfer host controls to a connected player after the host disconnects for 30 seconds.
 - Pause between rounds if fewer than four players are connected.
+- Explicit lobby departures free the nickname and slot immediately. Delete empty lobbies;
+  if the host explicitly leaves and nobody else is connected, close the lobby.
+- Remove lobby members after ten minutes without contact. They may join again before
+  the game starts, subject to nickname availability and capacity.
+- Leaving an unfinished game requires confirmation. Keep the player's slot, submissions,
+  and score, mark them offline immediately, and transfer hosting to a connected player.
+  Leaving is synchronized across browser tabs sharing the player identity.
+- Offer Return to game (or View last results for finished games) until joining/creating
+  another room or discovering the old room has expired. Room-code reentry also works.
+- Reject access after one hour without successful member activity (including polling).
+  Finished games use the same retention. Run cleanup every five minutes to delete
+  expired rooms and prune absent lobby members. Active-game membership is preserved.
+- A failed Leave offers retry or a local exit, which cannot guarantee server departure.
 
 ## Round flow
 

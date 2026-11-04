@@ -37,7 +37,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 
 6. Restart the dev server. Host a room, then join with three more independent browser profiles/devices. Regular tabs in the same browser profile share one saved player identity; use separate profiles or browsers to test different players.
 
-Anonymous sessions let someone reconnect on the same browser/device. Clearing site data or changing devices loses that identity. Since voting waits for every original voter, that can leave a game stuck; create a new room in that case.
+Anonymous sessions let someone reconnect on the same browser/device. Explicit Leave in the lobby removes the player immediately; during a game it saves their spot and offers Return to game. Clearing site data or changing devices loses that identity. Since voting waits for every original voter, that can leave a game stuck; create a new room in that case.
 
 Official references: [anonymous auth](https://supabase.com/docs/guides/auth/auth-anonymous), [database functions](https://supabase.com/docs/guides/database/functions).
 
@@ -86,8 +86,48 @@ Each room operation locks its database row, validates membership and action, app
 
 For this turn-based MVP, clients synchronize every 2.5 seconds using the RPC. This deliberately uses polling rather than Supabase Realtime subscriptions; it also acts as the heartbeat for host transfer. The server checks the answer deadline before accepting writes. If every client is closed, phase processing resumes on the next request, using the original deadline. Host disconnection is detected through missed heartbeats, so transfer occurs after about 30 seconds plus network/polling delay. Backgrounded mobile browsers may be treated as disconnected, but still owe their votes.
 
-This is a small private-play MVP. Before wider public release, add abuse/rate controls for anonymous room creation, retention/cleanup for old rooms, and live multi-device testing. Rooms and anonymous users currently persist until an administrator removes them. The included backend tests do not replace a live Supabase authentication/network test.
+This is a small private-play MVP. Before wider public release, add abuse/rate controls for anonymous room creation, retention/cleanup for old rooms, and live multi-device testing. Rooms expire after one hour without member activity; automatic deletion requires the Cron migration below. Anonymous auth users have a separate lifecycle and are not deleted by room cleanup. The included backend tests do not replace a live Supabase authentication/network test.
 
 ## A useful AI development loop
 
 Ask for one small change, inspect the diff, run the tests, then try the affected flow yourself. For example: “Add a copy-invite-link button without changing the game rules.” Keep the brief updated when changing rules, especially timers, ties, or missing-player behavior.
+
+## Room lifecycle migration (existing Supabase projects)
+
+Apply these SQL files in order in the Supabase SQL Editor, before deploying the updated frontend:
+
+1. `supabase/migrations/002_room_lifecycle.sql` adds activity tracking, explicit departure,
+   return, expiry checks, and the private cleanup function. It preserves the existing
+   scoring implementation. Existing rooms inherit their latest player heartbeat and
+   may already be expired. Run this migration once, after `001_hot_takes.sql`.
+2. Enable **Integrations → Cron** (`pg_cron`) in the Supabase dashboard.
+3. Run `supabase/migrations/003_schedule_room_cleanup.sql`. It schedules
+   `hot-takes-room-cleanup` every five minutes. Reapplying this schedule updates the
+   named job rather than creating a duplicate.
+4. Check the job and its run history in **Integrations → Cron**. For an immediate
+   cleanup, an administrator can run `select hot_private.cleanup_rooms();`.
+
+New projects need all three migrations in order. Do not rerun migration 001 on an
+existing project. The embedded database tests apply 001 and 002 and invoke cleanup
+manually; they do not run the Supabase-only Cron extension.
+
+A lobby player loses their slot after ten minutes without contact. A room expires
+at one hour without successful member requests, including polling; access is denied
+at that cutoff even before the next scheduled deletion. Cleanup may delete an empty
+lobby earlier. Explicit host departure closes a lobby if nobody else is connected.
+Active-game departures preserve the roster, answers, ballots and scores; voting still
+waits for every original player. Finished games retain results for the same inactivity
+window. Closing a tab is treated as a disconnect, not an explicit Leave.
+
+The Return to game link is saved on the same browser/device and removed when a player
+joins/creates another room or attempts to return to an unavailable room. Viewing an
+open room, including finished results, refreshes its inactivity clock. A failed Leave
+allows retry or Leave on this device; the latter cannot guarantee server departure.
+
+After deployment, verify with independent browser profiles/devices: last-player lobby
+exit, host transfer, active-game leave/return, and voting with a temporarily absent
+player. Also verify the Cron job records successful runs. Browser tests mock the
+network boundary; live Supabase and Cron operation still require these checks.
+
+Supabase references: [Cron installation](https://supabase.com/docs/guides/cron/install),
+[scheduling and monitoring](https://supabase.com/docs/guides/cron/quickstart).
