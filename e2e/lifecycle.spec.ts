@@ -8,7 +8,7 @@ async function mockGame(page:Page,phase='voting',failLeave=false){
     export class RoomDeparted extends Error {}
     let departed=false;
     const snapshot={code:'ABCDEF',phase:${JSON.stringify(phase)},host:'me',me:'me',round:1,prompt:'A prompt',deadline:null,
-      players:[{id:'me',name:'Tester',online:true,answered:true,voted:true,total:0}],answers:[]};
+      players:[{id:'me',name:'Tester',online:true,answered:true,voted:true,total:0}],answers:[],history:[]};
     export async function callGame(action){
       if(action==='resume'){departed=false;return snapshot;}
       if(departed)throw new RoomDeparted('You left this room in another tab.');
@@ -42,6 +42,7 @@ test('failed departure offers retry and local exit while preserving return',asyn
 });
 test('finished departure saves results without confirmation',async({page})=>{
   await mockGame(page,'finished');
+  await page.getByRole('button',{name:'View game recap'}).click();
   await page.getByRole('button',{name:'Back to the start'}).click();
   await expect(page.getByRole('button',{name:/View last results/})).toBeVisible();
 });

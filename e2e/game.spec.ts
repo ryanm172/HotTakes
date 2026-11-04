@@ -28,7 +28,14 @@ test('mobile practice plays five rounds and shows a winner',async({page})=>{
     await expect(page.getByText(`Practice opinion ${round}`,{exact:true})).toBeVisible();
     if(round<5)await page.getByRole('button',{name:'Next round'}).click();
   }
+  await page.getByRole('button',{name:'View game recap'}).click();
   await expect(page.getByText('THAT’S A WRAP',{exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Final scoreboard'})).toBeVisible();
+  await expect(page.locator('.recap-scoreboard tbody tr')).toHaveCount(4);
+  await expect(page.getByRole('article')).toHaveCount(5);
+  await expect(page.locator('.players-panel')).toBeHidden();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.screenshot({path:'artifacts/mobile-recap.png',fullPage:true});
   expect(errors).toEqual([]);
   await page.getByRole('button',{name:'Back to the start'}).click();
   await expect(page.getByRole('heading',{name:/Your opinions/})).toBeVisible();

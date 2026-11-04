@@ -52,6 +52,18 @@ Tied answers share the average points of the places they occupy, including ties 
 
 After five scored rounds, the highest total wins. Players tied for the highest total share the win.
 
+Show round-five results first, then offer **View game recap**. The recap uses one
+column without the midgame player sidebar: winner announcement, final scoreboard,
+then five expanded round highlight cards in chronological order.
+
+The scoreboard sorts all players by total points and shows rank, nickname, total,
+and a "you" marker. Equal totals share a rank using competition ranking (1, 1, 3).
+Each round card shows its prompt, highest-heat answer(s), and authors only. Preserve
+every exact tie for hottest; do not show heat or points on the highlight cards.
+Save highlights only after scoring, and retain them with the room for reconnecting
+players. Practice mode follows the same flow. Back to the start and View last results
+keep the existing room-retention policy. No rematch flow or recovery of old test games.
+
 ## Implementation planning
 
 Test in Safari on iPhone over the local Wi-Fi network and use separate desktop browser profiles to simulate additional players. Supabase owns phase transitions, answer deadlines, private submissions, and scoring. Start with periodic server synchronization for this turn-based game. Cloud configuration and a live multi-device test remain required before calling real online play verified.
